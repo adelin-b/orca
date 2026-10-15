@@ -2,6 +2,7 @@ import { markdownParserAliases } from './config/build-plugins/markdown-parser-ex
 import { isBuiltin } from 'node:module'
 import { resolve } from 'node:path'
 import { defineConfig, type UserConfig } from 'electron-vite'
+import { defaultClientConditions } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { createBootstrapFatalExitBanner } from './config/build-plugins/bootstrap-fatal-exit-banner'
@@ -326,6 +327,8 @@ export const electronViteConfig: UserConfig = {
   },
   renderer: {
     resolve: {
+      // Why: dev serves workspace packages unbundled, so a CommonJS dist has no ESM named exports.
+      conditions: ['orca-source', ...defaultClientConditions],
       alias: {
         ...markdownParserAliases,
         '@renderer': resolve('src/renderer/src'),
