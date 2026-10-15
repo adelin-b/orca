@@ -7,7 +7,7 @@ import {
   ORCA_SCRUB_SAFE_PANE_ENV
 } from '../../shared/agent-hook-scrub-safe-env'
 import { AGENT_HOOK_RUNTIME_ENV_KEYS } from '../ipc/pty/host-env/spawn-env-keys'
-import type { AcpDialect } from './acp-dialects/acp-dialect'
+import { GENERIC_ACP_DIALECT, type AcpDialect } from './acp-dialects/acp-dialect'
 import { GROK_ACP_DIALECT } from './acp-dialects/grok-dialect'
 import { OMP_ACP_DIALECT } from './acp-dialects/omp-dialect'
 import { OPENCODE_ACP_DIALECT } from './acp-dialects/opencode-dialect'
@@ -192,10 +192,28 @@ const OMP_LAUNCH_SPEC: AcpLaunchSpec = {
   compaction: true
 }
 
+// DeepSeek Harness serves plain ACP through its shipped `acp` profile; profiles live under DSH_HOME.
+const DSH_LAUNCH_SPEC: AcpLaunchSpec = {
+  agent: 'dsh',
+  command: 'dsh',
+  args: () => ['--profile', 'acp'],
+  env: {},
+  dialect: GENERIC_ACP_DIALECT,
+  // DSH advertises no sign-in method; its providers read keys from its own profile config.
+  loginCommand: [],
+  account: directoryAccountBinding('DSH_HOME', (homePath) => join(homePath, '.dsh')),
+  installDirectories: () => [],
+  modelDiscovery: {
+    kind: 'unavailable',
+    reason: 'dsh lists no models outside a session'
+  }
+}
+
 export const ACP_LAUNCH_SPECS: readonly AcpLaunchSpec[] = [
   GROK_LAUNCH_SPEC,
   OPENCODE_LAUNCH_SPEC,
-  OMP_LAUNCH_SPEC
+  OMP_LAUNCH_SPEC,
+  DSH_LAUNCH_SPEC
 ]
 
 export function acpLaunchSpecFor(agent: string): AcpLaunchSpec | null {
